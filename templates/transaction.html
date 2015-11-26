@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %} Transaction entries {% endblock %}
+
+{% block content_title %}
+{% if transaction is defined %}
+Transaction #{{ transaction.id }} 
+{% else %}
+Transactions
+{# Item filters if exists #}
+{% if store is defined %}
+from store "{{ store.name }}" 
+{% endif %}
+{% if major is defined %}
+in category "{{ major.name }}"
+{% endif %}
+{% if minor is defined %}
+in subcategory "{{ minor.name }}"
+{% endif %}
+{% if date_range is defined %}
+from {{ date_range.begin }} until {{ date_range.end }}
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  table { table-layout: fixed; }
+  table th, table td { overflow: hidden; }
+</style>
+<script type="text/javascript">
+window.onload = function() {
+	{% if items is not defined %} {# provide 8 empty rows #}
+	addTableRow('trans-items', 'noitems', 8, false);
+	{% endif %}
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+{% if trans is defined %}
+
+<div class="row"><div class="col-lg-8">
+	{% if trans.exists() %}
+	<table class="table-striped table-condensed">
+		<thead><tr>
+				<th style="width: 8%; text-align: center">ID</th>
+				<th style="width: 15%">Date</th>
+				<th style="width: 25%">Store</th>
+				<th style="width:  8%; text-align: center"># Items</th>
+				<th style="width: 10%; text-align: center">Value</th>
+				<th style="width:  8%; text-align: center">Receipt</th>
+				<th style="width:  8%; text-align: center">Delete</th>
+		</tr></thead>
+		<tbody>
+			{% for t in trans %}
+			<tr>
+				<td style="text-align: center">{{ t.id }}</td>
+				<td><a href="trans/{{ t.id }}">{{ t.date }}</a></td>
+				<td>{{ t.store.id }} : {{ t.store.name }}</td>
+				<td style="text-align: right">{{ t.items }}</td>
+				<td style="text-align: right">{{ t.price|pricefilter }}</td>
+				<td style="text-align: center">
+					{% if t.bill_file_name != config['NO_FILE'] %}
+					<a href="/trans/bill/{{t.id}}" target="_blank">
+						<button type="button" class="btn btn-default">
+							<span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+					  </button>
+					</a>
+					{% else %}
+					<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+					{% endif %}
+				</td>
+				<td style="text-align: center">
+					<button type="button" class="btn btn-default" data-id="{{ t.id }}" onclick="confirmDeleteTransaction(this)">
+						<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+					</button>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p>No transaction exists.</p>
+	{% endif %}
+</div></div>
+
+<div class="row"><div class="col-lg-2">
+	<button type="button" class="btn btn-default" onclick="window.location.replace('/trans/add')">
+		Add
+		<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+	</button>
+</div></div>
+
+{% else %} {# add transaction #}
+
+<form action="{{ url_for('trans_add') }}" method="post" enctype="multipart/form-data">
+	{% if transaction is defined %}
+	<input type="hidden" name="trans_id" value="{{ transaction.id }}">
+	{% endif %}
+
+	<div class="row form-group">
+		<label for="date" class="col-lg-2 control-label">Date</label>
+		<div class="col-lg-5">
+			<input type="text" class="form-control" name="date" value="{% if transaction is defined %}{{ transaction.date }}{% else %}{{ now|datefilter }}{% endif %}">
+		</div>
+	</div>
+
+	<div class="row form-group">
+		<label for="file" class="col-lg-2 control-label">Receipt</label>
+		<div class="col-lg-5">
+			{% if transaction is defined and transaction.bill_file_name != config['NO_FILE_NAME'] %}
+			(uploaded: <a href="/trans/bill/{{transaction.id}}" target="_blank">{{ transaction.bill_file_name }}</a>)
+			{% endif %}
+			<input type="file" name="file">
+		</div>
+	</div>
+
+	<div class="row form-group">
+		<label for="store" class="col-lg-2 control-label">Store</label>
+		<div class="col-lg-5">
+			<select name="store" id="store" class="form-control">
+				{% for store in stores %}
+				<option value="{{ store.id }}" {% if transaction is defined and transaction.store == store.id %}SELECTED{% endif %}>{{ store.id }} : {{ store.name }}</option>
+				{% endfor %}
+			</select>
+		</div>
+	</div>
+	
+	<div class="row form-group">
+		<label class="col-lg-2 control-label">Transaction items</label>
+		<div class="col-lg-9">
+			<table id="trans-items" class="table-striped table-condensed">
+				<thead><tr>
+						{% if items is defined %}
+						<th style="width:  5%; text-align: center">ID</th>
+						{% endif %}
+						<th style="width: 20%">Name</th>
+						<th style="width:  5%; text-align: center">Value</th>
+						<th style="width:  5%; text-align: center">Quantity</th>
+						<th style="width: 20%">Category</th>
+						<th style="width: 20%; text-align: center">Note</th>
+						{% if items is defined %}
+						<th style="width:  5%; text-align: center">Delete</th>
+						{% endif %}
+				</tr></thead>
+				<tbody>
+					{% if items is defined %}
+
+					{% if items|length > 0 or items.exists() %}
+
+					{% for item in items %}
+					<tr>
+						<td style="text-align: center">{{ item.id }}</td>
+						<td><a href="/item/{{ item.id }}">{{ item.name }}</a></td>
+						<td style="text-align: right">{{ item.price|pricefilter }}</td>
+						<td style="text-align: right">{{ item.quantity }}</td>
+						<td>{{ item.minor.major.name }} :: {{ item.minor.name }}</td>
+						<td>{{ item.note }}</td>			
+						<td style="text-align: center">
+							<button type="button" class="btn btn-default" data-id="{{ item.id }}" onclick="confirmDeleteItem(this, true)">
+								<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+							</button>
+						</td>
+					</tr>
+					{% endfor %}
+
+					{% else %}
+					<tr id="noitems">
+						<td colspan="7"><p>The transaction has no items.</p></td>
+					</tr>
+					{% endif %} {# items.exists() #}	
+					{% endif %} {# items is defined #}
+				</tbody>
+				<tfoot><tr>
+						<td colspan="5">
+							<button type="button" class="btn btn-default" onclick="addTableRow('trans-items', 'noitems', 5, {% if transaction is defined %}true{% else %}false{% endif %})">
+								Add 5 rows.
+								<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+							</button>
+						</td>
+				</tr></tfoot>
+			</table>
+		</div>
+	</div>
+
+	<div class="row form-group col-lg-offset-2 col-lg-5">
+		<button class="btn btn-primary" type="submit">{% if transaction is defined %}Update{% else %}Update{% endif %}</button>
+		{% if transaction is defined %}<span class="btn btn-danger" data-id="{{ transaction.id }}" onclick="confirmDeleteTransaction(this)">Delete</span>{% endif %}
+    <a class="btn btn-default" href="{{ url_for('trans_list') }}">Close</a>
+	</div>
+
+</form>
+
+{% endif %}
+
+{# Modals #} 
+
+<div class="modal fade" aria-hidden="true">
+	<table><tr id="rowToClone">
+		<td><input type="text" name="item-name[]" class="form-control"></td>
+		<td><input type="text" name="item-price[]" class="form-control"></td>
+		<td><input type="text" name="item-quantity[]" class="form-control" value="1"></td>
+		<td>
+			<select name="item-minor[]" class="form-control">
+				{% for major in majors %}
+				<option value="{{ major.minor.id }}">{{ major.minor.id }} : {{ major.name }} :: {{ major.minor.name }}</option>
+				{% endfor %}
+			</select>
+		</td>
+		<td><input type="text" name="item-note[]" class="form-control"></td>
+	</tr></table>
+</div>
+
+<div class="modal fade" id="deleteItemModal" role="dialog" aria-labelledby="deleteItemLabel" aria-hidden="true">
+  <div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header" style="text-align: center">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title"><span class="alert-danger">Deleting the item</span></h4>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+	      <button type="button" class="btn btn-primary" onclick="deleteItem()">Confirm delete</button>
+			</div>
+		</div> {# modal-content #}
+	</div> {# modal-dialog #}
+</div> {# modal #}
+
+<div class="modal fade" id="deleteTransactionModal" role="dialog" aria-labelledby="deleteTransactionLabel" aria-hidden="true">
+  <div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header" style="text-align: center">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title"><span class="alert-danger">Deleting the transaction</span></h4>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+	      <button type="button" class="btn btn-primary" onclick="deleteTransaction()">Confirm delete</button>
+			</div>
+		</div> {# modal-content #}
+	</div> {# modal-dialog #}
+</div> {# modal #}
+
+
+
+{% endblock %}

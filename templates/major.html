@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %} Category entries {% endblock %}
+
+{% block content_title %} Categories {% endblock %}
+
+{% block extra_head %}
+<style>
+  table { table-layout: fixed; }
+  table th, table td { overflow: hidden; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if majors is defined %}
+<div class="row"><div class="col-lg-9">
+	<table class="table-striped table-condensed">
+		<thead>
+			<tr>
+				<th style="width: 5%; text-align:center">ID</th> 
+				<th style="width: 25%">Name</th> 
+				<th style="width: 8%">Income</th>
+				<th style="width: 62%">Subcategories</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for major in majors %}
+			<tr>
+				<td style="text-align: center">
+					{{ major.id }}
+				</td>
+				<td>
+					<a href="/major/{{major.id}}">{{ major.name }}</a>
+				</td>
+				<td style="text-align: center">
+					{% if major.income %}
+					<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+					{% else %}
+					<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+					{% endif %}
+				</td>
+				<td>
+					{% for minor in major.minors %}	
+					<a href="/minor/{{minor.id}}">
+						<button id="{{ minor.id }}" type="button" class="btn btn-default minor-delete">
+						{{ minor.name }}
+						</button>
+					</a>
+					{% endfor %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan=4>
+					<button type="button" class="btn btn-default" onclick="window.location.replace('/major/add')">
+						Add
+						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+					</button>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div></div>
+{% else %} {# add major #}
+<form action="{{ url_for('major_add') }}" method="post">
+	{% if major is defined %}
+	<input type="hidden" name="major_id" value="{{ major.id }}">
+	{% endif %}
+	<div class="row form-group">
+		<label for="name" class="col-lg-2 control-label">Category name</label>
+		<div class="col-lg-5">
+			<input type="text" id="name" name="name" class="form-control" placeholder="Name" value="{% if major is defined %}{{ major.name }}{% endif %}">
+		</div>
+	</div>
+
+	<div class="row form-group">
+		<label for="income" class="col-lg-2 control-label">Income</label>
+		<div class="col-lg-1">
+			<input type="checkbox" id="income" name="income" {% if major is defined and major.income %}checked{% endif %}>
+		</div>
+	</div>
+
+	<div class="row form-group">
+		<label for="minors" class="col-lg-2 control-label">Subcategories</label>
+		<div class="col-lg-5 minors">
+			{% if minors is defined %}
+			{% for minor in minors %}
+			<button id="minor-{{ minor.id }}" type="button" class="btn btn-default">
+				{{ minor.name }}
+				<a href="/minor/{{ minor.id }}"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span></a>
+				<span data-id="{{ minor.id }}" class="glyphicon glyphicon-remove" aria-hidden="true" onclick="confirmDeleteSubcategory(this)"></span>
+			</button>
+			{% endfor %}
+			<button data-id="{{ major.id }}" type="button" class="btn btn-default" onclick="createNewSubcategory(this)">
+				<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+			</button>
+			{% else %}
+			<input type="text" id="minors" name="minors" class="form-control" placeholder="Sub 1, Sub 2"> (comma separated)
+			{% endif %}
+		</div>
+	</div>
+
+	{% if num_items is defined %}
+	<div class="row form-group">
+		<label class="col-lg-2 control-label">Number of items</label>
+		<div class="col-lg-5">{{ num_items }}</div>
+	</div>
+	{% endif %}
+
+  <div class="row form-group">
+	  <div class="col-lg-offset-2 col-lg-5">
+			<button class="btn btn-primary" type="submit">{% if major %}Update{% else %}Submit{% endif %}</button>
+			{% if major %}
+			<button type="button" class="btn btn-danger" data-id="{{ major.id }}" onclick="confirmDeleteCategory(this)">
+				Delete
+			</button>
+			{% endif %}
+	    <a class="btn btn-default" href="{{ url_for('major_list') }}">Close</a>
+	  </div>
+  </div>
+</form>
+{% endif %}
+
+{# Modals #}
+
+{# Modal remove category #}
+
+<div class="modal fade" id="deleteMajorModal" role="dialog" aria-labelledby="deleteMajorModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header" style="text-align: center">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title"><span class="alert-danger">Deleting the category</span></h4>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	      <button type="button" class="btn btn-primary" onclick="deleteCategory()">Confirm delete</button>
+			</div>
+		</div> {# modal-content #}
+	</div> {# modal-dialog #}
+</div> {# modal #}
+
+{# Modal remove subcategory #}
+
+<div class="modal fade" id="deleteMinorModal" role="dialog" aria-labelledby="deleteMinorModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header" style="text-align: center">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title"><span class="alert-danger">Deleting the subcategory</span></h4>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+	      <button type="button" class="btn btn-primary" onclick="deleteSubcategory()">Confirm delete</button>
+			</div>
+		</div> {# modal-content #}
+	</div> {# modal-dialog #}
+</div> {# modal #}
+
+{# Modal add subcategory #}
+
+<div class="modal fade" id="addMinorModal" role="dialog" aria-labelledby="addMinorModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header" style="text-align: center">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+				<h4 class="modal-title">Adding a subcategory</span></h4>
+			</div>
+			<div class="modal-body">
+				<form role="form">
+					<div class="form-group">
+						<label for="minor-name" class="control-label">Subcategory name</label>
+						<input type="text" class="form-control" id="minor-name" placeholder="Subcategory">
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+	      <button type="button" class="btn btn-primary" onclick="addSubcategory()">Add</button>
+			</div>
+		</div> {# modal-content #}
+	</div> {# modal-dialog #}
+</div> {# modal #}
+
+{% endblock %}
+

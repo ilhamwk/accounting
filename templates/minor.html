@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %} Category entries {% endblock %}
+
+{% block content_title %} Categories {% endblock %}
+
+{% block content %}
+
+{% if minor is defined %}
+
+<div class="row form-group">
+	<label for="id" class="col-lg-2 control-label">ID</label>
+	<div name="id" class="col-lg-5">{{ minor.id }}</div>
+</div>
+
+<div class="row form-group">
+	<label for="minor-name" class="col-lg-2 control-label">Subcategory name</label>
+	<div class="col-lg-5">
+		<input name="minor-name" id="minor-name" class="form-control" value="{{ minor.name }}">
+	</div>
+</div>
+
+<div class="row form-group">
+	<label for="minor-major" class="col-lg-2 control-label">Category</label>
+	<div class="col-lg-5">
+		<select name="minor-major" id="minor-major" class="form-control">
+			{% for major in majors %}
+			<option value="{{ major.id }}" {% if minor.major == major.id %}SELECTED{% endif %}>{{ major.id }} : {{ major.name }}</option>
+			{% endfor %}
+		</select>
+	</div>
+</div>
+
+<div class="row form-group">
+	<div class="col-lg-offset-2 col-lg-5">
+		<button type="button" class="btn btn-primary" onclick="editSubcategory({{minor.id}})">Update</button>
+		<a href="/major/{{ minor.major.id }}"><button type="button" class="btn btn-default">Cancel</button></a>
+	</div>
+</div>
+
+{% endif %}
+
+{% endblock %}
