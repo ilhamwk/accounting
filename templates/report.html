@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %} Report {% endblock %}
+
+{% block content_title %} 
+Report for
+{% if month is defined %}{{ month }}{% endif %}
+{% if year is defined %}{{ year }}{% endif %}
+{% if days is defined %}Last {{ days }} Days{% endif %} 
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  table { table-layout: fixed; }
+  table th, table td { overflow: hidden; }
+</style>
+{% endblock %}
+
+{% macro render_value(value, size='p') -%}
+<{{size}}>
+{% if value < 0 %}
+<span class="text-danger">-
+{% elif value == 0 %}
+<span>
+{% else %}
+<span class="text-success">+
+{% endif %}
+{{ value|abs|pricefilter }}	
+</span></{{size}}>
+{%- endmacro %}
+
+{% block content %}
+
+<div class="row">
+	<div class="col-offset-lg-1 col-lg-2">
+		<div class="well well-lg" style="text-align: center">
+			<small>WORTH</small><br>
+			{{ render_value(worth, 'h4') }}
+			</span>
+		</div>
+	</div>
+	<div class="col-offset-lg-1 col-lg-2">
+		<div class="well well-lg" style="text-align: center">
+			<small>INCOME</small><br>
+			{{ render_value(income, 'h4') }}
+		</div>
+	</div>
+	<div class="col-offset-lg-1 col-lg-2">
+		<div class="well well-lg" style="text-align: center">
+			<small>EXPENSE</small><br>
+			{{ render_value(-expense, 'h4') }}
+		</div>
+	</div>
+	<div class="col-offset-lg-1 col-lg-2">
+		<div class="well well-lg" style="text-align: center">
+			<small>SAVED</small><br>
+			{{ render_value(income - expense, 'h4') }}
+		</div>
+	</div>
+</div>
+
+{% if year is defined and month is not defined %} {# yearly report #} 
+<div class="row"><div class="col-lg-12">
+		<table class="table-bordered table-hover table">
+			<thead><tr>
+				 <th style="width:10%">Categories</th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/1">Jan</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/2">Feb</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/3">Mar</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/4">Apr</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/5">May</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/6">Jun</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/7">Jul</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/8">Aug</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/9">Sep</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/10">Oct</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/11">Nov</a></th>
+				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/12">Dec</a></th>
+				 <th style="text-align:right">Total</th>
+			</tr></thead>
+			<tbody>
+			{% set minor_order = table[1]['order'] %}
+			{% set income = False %}
+			{% for minor in minor_order %}
+			  {% set (major_id, major_name, inc, minor_name, _) = table[1][minor] %}
+			  {% if inc != income %}
+				  {% set income = inc %}
+					{% if income %}
+					<tr class="success"><td colspan=14><h4>INCOME</h4></td></tr>
+					{% else %}
+					<tr class="warning"><td colspan=14><h4>EXPENSE</h4></td></tr>
+					{% endif %}
+				{% endif %}
+				<tr>
+					<td>{{ major_name }} :: {{ minor_name }}</td>
+					{% for month in range(1, 13) %}
+						{% set (_, _, _, _, val) = table[month][minor] %}
+						{% if income %}
+						<td style="text-align: right"><a href="/item?minor={{minor}}&date_year={{year}}&date_month={{month}}">{{ render_value(val) }}</a></td> 
+						{% else %}
+							<td style="text-align: right"><a href="/item?minor={{minor}}&date_year={{year}}&date_month={{month}}">{{ render_value(-val) }}</td> 
+						{% endif %}
+					{% endfor %}
+					{% if income %}
+					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(table['total'][minor]) }}</a></strong></td>
+					{% else %}
+					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(-table['total'][minor]) }}</a></strong></td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+{% elif month is defined or days is defined %} {# normal report #}
+<div class="row"><div class="col-lg-6">
+		<table class="table-bordered table-hover table">
+			<thead><tr>
+				 <th>Categories</th>
+				 <th style="text-align: right">Amount</th>
+		 </tr></thead>
+		 <tbody>
+			{% set income = False %}
+			{% for minor in table['order'] %}
+			  {% set (major_id, major_name, inc, minor_name, value) = table[minor] %}
+			  {% if inc != income %}
+				  {% set income = inc %}
+					{% if income %}
+					<tr class="success"><td colspan=2><h4>INCOME</h4></td></tr>
+					{% else %}
+					<tr class="warning"><td colspan=2><h4>EXPENSE</h4></td></tr>
+					{% endif %}
+				{% endif %}
+				<tr>
+					<td>{{ major_name }} :: {{ minor_name }}</td>
+					{% if income %}
+					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(value) }}</a></strong></td>
+					{% else %}
+					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(-value) }}</a></strong></td>
+					{% endif %}
+				</tr>
+			{% endfor %}
+		 </tbody>
+	 </table>
+{% endif %}
+</div></div>
+
+{% endblock %}

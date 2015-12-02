@@ -39,7 +39,6 @@ def major_add():
             major.save()
             flash('Category #%d updated successfully.' % major.id, 'success')
         else: 
-            app.logger.debug(request.form);
             major = Major.create(name=request.form['name'],
                                  income=bool(request.form.get('income')))
             minors = []

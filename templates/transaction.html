@@ -8,17 +8,14 @@ Transaction #{{ transaction.id }}
 {% else %}
 Transactions
 {# Item filters if exists #}
-{% if store is defined %}
+{% if store is defined and store is not none %}
 from store "{{ store.name }}" 
 {% endif %}
-{% if major is defined %}
-in category "{{ major.name }}"
+{% if date_start is defined and date_start is not none %}
+from {{ date_start }}
 {% endif %}
-{% if minor is defined %}
-in subcategory "{{ minor.name }}"
-{% endif %}
-{% if date_range is defined %}
-from {{ date_range.begin }} until {{ date_range.end }}
+{% if date_end is defined and date_end is not none %}
+until {{ date_end }}
 {% endif %}
 {% endif %}
 {% endblock %}
@@ -40,6 +37,10 @@ window.onload = function() {
 {% block content %}
 
 {% if trans is defined %}
+
+{% if trans.exists() %}
+{{ render_pagination(paginate) }}
+{% endif %}
 
 <div class="row"><div class="col-lg-8">
 	{% if trans.exists() %}
@@ -188,7 +189,7 @@ window.onload = function() {
 	<div class="row form-group col-lg-offset-2 col-lg-5">
 		<button class="btn btn-primary" type="submit">{% if transaction is defined %}Update{% else %}Update{% endif %}</button>
 		{% if transaction is defined %}<span class="btn btn-danger" data-id="{{ transaction.id }}" onclick="confirmDeleteTransaction(this)">Delete</span>{% endif %}
-    <a class="btn btn-default" href="{{ url_for('trans_list') }}">Close</a>
+    <button class="btn btn-default" onclick="window.history.back()">Close</button>
 	</div>
 
 </form>
@@ -242,7 +243,5 @@ window.onload = function() {
 		</div> {# modal-content #}
 	</div> {# modal-dialog #}
 </div> {# modal #}
-
-
 
 {% endblock %}

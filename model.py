@@ -2,6 +2,8 @@ from flask import *
 from peewee import *
 from playhouse.sqlite_ext import *
 
+from datetime import date, time
+
 from app import db, app
 
 class Major(Model):
@@ -17,6 +19,18 @@ class Major(Model):
                .select(Major, Minor) \
                .join(Minor) \
                .order_by(Major.id, Minor.id)
+
+    @staticmethod
+    def listWithTotalPrice(date_start, date_end):
+        return Major \
+               .select(Major, fn.SUM(Item.price).alias('amount')) \
+               .join(Minor) \
+               .join(Item, JOIN.LEFT_OUTER) \
+               .join(Transaction, JOIN.LEFT_OUTER) \
+               .where(date_start.strftime('%Y-%m-%d') <= Transaction.date,
+                      date_end.strftime('%Y-%m-%d') >= Transaction.date) \
+               .group_by(Minor) \
+               .order_by(Major.income, Major.id)
 
 
 class Minor(Model):
@@ -34,6 +48,38 @@ class Minor(Model):
                .where(Minor.major == major_id) \
                .group_by(Minor) \
                .order_by(Minor.id)
+
+    @staticmethod
+    def listForReport(date_start, date_end):
+        return Minor \
+               .select(Minor, Major, fn.SUM(Item.price).alias('amount')) \
+               .join(Major) \
+               .switch(Minor) \
+               .join(Item, JOIN.LEFT_OUTER) \
+               .join(Transaction, JOIN.LEFT_OUTER) \
+               .where(Transaction.date >= date_start,
+                      Transaction.date <= date_end)  \
+               .group_by(Minor) \
+               .order_by(Major.income, Major.id, Minor.id)
+
+    @staticmethod
+    def listForYearlyReport(year):
+        return Minor \
+               .select(Transaction.date.month.alias('month'), Major, Minor, 
+                       fn.SUM(Item.price).alias('amount')) \
+               .join(Major) \
+               .switch(Minor) \
+               .join(Item, JOIN.LEFT_OUTER) \
+               .join(Transaction, JOIN.LEFT_OUTER) \
+               .where(year == Transaction.date.year) \
+               .group_by(Minor, Transaction.date.month) \
+               .order_by(Transaction.date.month,
+                         Major.income, Major.id, Minor.id)
+ 
+    @staticmethod
+    def assetUntilDate(date_end):
+        date_start = date(1900, 1, 1)
+        return Minor.listForReport(date_start, date_end)
 
 
 class Store(Model):

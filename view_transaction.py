@@ -7,11 +7,44 @@ import os
 
 from app import app
 from model import Major, Minor, Store, Transaction, Item, ItemIndex
+from helper import *
 
 @app.route('/trans', methods=['GET'])
 def trans_list():
     trans = Transaction.listAll()
-    return render_template('transaction.html', trans=trans)
+    (trans, filters, page, pages) = transaction_filters(request.args, trans)
+    paginate = Paginate(page, pages, filters, '/trans')
+    return render_template('transaction.html', 
+                           trans=trans, 
+                           date_start=filters['date_start'],
+                           date_end=filters['date_end'],
+                           store=filters['store'],
+                           paginate=paginate)
+
+def transaction_filters(args, transQuery):
+    retval = { 'store': None, 'date_start': None, 'date_end': None }
+    if args.get('store'):
+        retval['store'] = get_object_or_404(Store, Store.id == args['store'])
+        transQuery = transQuery.where(Transaction.store == args['store'])
+    start = date(1900, 1, 1)
+    end = date(9999, 12, 31)
+    dateparam = False
+    if args.get('date_start'):
+        start = datetime.strptime(args['date_start'], '%Y-%m-%d').date()
+        retval['date_start'] = start
+        dateparam = True
+    if args.get('date_end'):
+        end = datetime.strptime(args['date_end'], '%Y-%m-%d').date()
+        retval['date_end'] = end
+        dateparam = True
+    if dateparam:
+        transQuery = transQuery \
+                     .where(Transaction.date >= start.strftime('%Y-%m-%d'), 
+                            Transaction.date <= end.strftime('%Y-%m-%d'))
+    page = int(args['page']) if args.get('page') else 1
+    pages = (transQuery.count() - 1) // app.config['ITEMS_PER_PAGE'] + 1
+    transQuery = transQuery.paginate(page, app.config['ITEMS_PER_PAGE'])
+    return (transQuery, retval, page, pages)
 
 @app.route('/trans/add', methods=['GET', 'POST'])
 def trans_add():
@@ -39,7 +72,7 @@ def trans_add():
             flash('Successfully updated transaction #%s' % trans_id, 'success')
             items = Item.listTransaction(trans_id)
         else: 
-            form_date = datetime.strptime(request.form['date'], '%Y-%m-%d')
+            form_date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
             store = request.form['store']
             trans = Transaction.create(date=form_date, store=store)
             file = request.files['file']

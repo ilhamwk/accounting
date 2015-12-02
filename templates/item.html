@@ -6,20 +6,23 @@
 Items 
 
 {# Item filters if exists #}
-{% if store is defined %}
+{% if store is defined and store is not none %}
 from store "{{ store.name }}" 
 {% endif %}
-{% if major is defined %}
+{% if major is defined and major is not none %}
 in category "{{ major.name }}"
 {% endif %}
-{% if minor is defined %}
+{% if minor is defined and minor is not none %}
 in subcategory "{{ minor.name }}"
 {% endif %}
-{% if transaction is defined %}
-from transaction #{{ transaction.id }} 
+{% if transaction is defined and transaction is not none %}
+in transaction #{{ transaction.id }} 
 {% endif %}
-{% if date_range is defined %}
-from {{ date_range.begin }} until {{ date_range.end }}
+{% if date_start is defined and date_start is not none %}
+from {{ date_start }}
+{% endif %}
+{% if date_end is defined and date_end is not none %}
+until {{ date_end }}
 {% endif %}
 
 {% endblock %}
@@ -35,25 +38,7 @@ from {{ date_range.begin }} until {{ date_range.end }}
 
 {% if items is defined %}
 {% if items.exists() %}
-<nav>
-  <ul class="pagination">
-    <li>
-      <a href="#" aria-label="Previous">
-        <span aria-hidden="true">&laquo;</span>
-      </a>
-    </li>
-    <li><a href="#">1</a></li>
-    <li><a href="#">2</a></li>
-    <li><a href="#">3</a></li>
-    <li><a href="#">4</a></li>
-    <li><a href="#">5</a></li>
-    <li>
-      <a href="#" aria-label="Next">
-        <span aria-hidden="true">&raquo;</span>
-      </a>
-    </li>
-  </ul>
-</nav>
+{{ render_pagination(paginate) }}
 
 <div class="row"><div class="col-lg-12">
 	<table class="table-striped table-condensed">
