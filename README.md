@@ -8,6 +8,9 @@ Requires:
 * dominate
 * Flask (and Jinja by extension)
 * peewee (with playhouse extension)
+* flask-nav
+* micawber
+* python-dateutil
 * jQuery
 * Bootstrap + Glyphicons
 * Chart.js
