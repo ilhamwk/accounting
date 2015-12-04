@@ -70,6 +70,7 @@ Report for
 </div>
 
 <div class="row">
+	{% if income != 0 %}
 	<div class="col-lg-4">
 		<h4>Income per category </h4>
     <canvas id="incomeCategoryChart" width="400" height="400"></canvas>
@@ -92,7 +93,9 @@ Report for
       new Chart(ctx).Pie(data);
     </script>
 	</div>
+	{% endif %}
 
+	{% if expense != 0 %}
 	<div class="col-lg-4">
 		<h4>Expense per category </h4>
     <canvas id="expenseCategoryChart" width="400" height="400"></canvas>
@@ -115,6 +118,7 @@ Report for
       new Chart(ctx).Pie(data);
     </script>
 	</div>
+	{% endif %}
 </div>
 
 {% if year is defined and month is not defined %} {# yearly report #} 
