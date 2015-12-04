@@ -40,7 +40,7 @@ def pricefilter(price, fmt=None):
     elif app.config['COUNTRY'] == 'UK':
         return unicode('{:20,.2f}'.format(p) + ' £', 'utf8') 
     elif app.config['COUNTRY'] == 'ID':
-        return 'Rp. ' + '{:20,d}'.format(p)
+        return 'Rp. ' + '{:20,d}'.format(int(price))
 
 nav = Nav()
 @nav.renderer()
