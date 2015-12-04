@@ -60,7 +60,6 @@ def simple_minor_table(result):
         table['total'][('major', major_id)] += row.amount
     return table
 
-@app.route('/', methods=['GET'])
 @app.route('/report', methods=['GET'])
 def report_now():
     today = date.today()

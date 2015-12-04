@@ -46,6 +46,7 @@ def transaction_filters(args, transQuery):
     transQuery = transQuery.paginate(page, app.config['ITEMS_PER_PAGE'])
     return (transQuery, retval, page, pages)
 
+@app.route('/', methods=['GET'])
 @app.route('/trans/add', methods=['GET', 'POST'])
 def trans_add():
     stores = Store.listAll()

@@ -10,6 +10,7 @@ Requires:
 * peewee (with playhouse extension)
 * jQuery
 * Bootstrap + Glyphicons
+* Chart.js
 
 To run:
 
@@ -20,7 +21,8 @@ This will run an HTTP server in localhost:5000.
 CRUD operations for basic data entries are done.
 
 To be added:
-* Search
 * JS support for field input for prices
+* Simple backup support (to upload db and receipt pics)
 
-Caveat: The item price is encoded as an integer, 100 times its value, to capture the cents without having to resort to floating point storage.
+Caveat: In EUR/GBP the item price is encoded as an integer, 100 times its
+value, to capture the cents without having to resort to floating point storage.
