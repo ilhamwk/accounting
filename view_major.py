@@ -79,10 +79,10 @@ def minor_add():
     flash('A new subcategory is added.', 'success')
     return jsonify(success=True)
 
-@app.route('/_minor/delete/<int:id>', methods=['POST'])
+@app.route('/_minor/delete/<int:id>', methods=['GET'])
 def minor_delete(id):
     try:
-        minor = Minor.get(Minor.id == id)
+        minor = get_object_or_404(Minor, Minor.id == id)
         minor.delete_instance()
     except:
         return jsonify(success=False)
