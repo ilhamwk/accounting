@@ -18,6 +18,12 @@ from {{ date_start }}
 until {{ date_end }}
 {% endif %}
 {% endif %}
+{% if 'add' not in request.path %}
+	<button type="button" class="btn btn-default" onclick="window.location.replace('/trans/add')">
+		Add
+		<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+	</button>
+{% endif %}
 {% endblock %}
 
 {% block extra_head %}
@@ -87,12 +93,14 @@ window.onload = function() {
 	{% endif %}
 </div></div>
 
+{% if 'add' not in request.path %}
 <div class="row"><div class="col-lg-2">
 	<button type="button" class="btn btn-default" onclick="window.location.replace('/trans/add')">
 		Add
 		<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
 	</button>
 </div></div>
+{% endif %}
 
 {% else %} {# add transaction #}
 
@@ -138,8 +146,8 @@ window.onload = function() {
 						<th style="width:  5%; text-align: center">ID</th>
 						{% endif %}
 						<th style="width: 20%">Name</th>
-						<th style="width:  5%; text-align: center">Value</th>
-						<th style="width:  5%; text-align: center">Quantity</th>
+						<th style="width:  6%; text-align: center">Value</th>
+						<th style="width:  4%; text-align: center">Quantity</th>
 						<th style="width: 20%">Category</th>
 						<th style="width: 20%; text-align: center">Note</th>
 						{% if items is defined %}
@@ -149,7 +157,7 @@ window.onload = function() {
 				<tbody>
 					{% if items is defined %}
 
-					{% if items|length > 0 or items.exists() %}
+					{% if (items is sequence and items|length > 0) or (items is not sequence and items.exists()) %}
 
 					{% for item in items %}
 					<tr>
@@ -189,7 +197,7 @@ window.onload = function() {
 	<div class="row form-group col-lg-offset-2 col-lg-5">
 		<button class="btn btn-primary" type="submit">{% if transaction is defined %}Update{% else %}Update{% endif %}</button>
 		{% if transaction is defined %}<span class="btn btn-danger" data-id="{{ transaction.id }}" onclick="confirmDeleteTransaction(this)">Delete</span>{% endif %}
-    <button class="btn btn-default" onclick="window.history.back()">Close</button>
+    <a class="btn btn-default" role="button" href="/trans">Close</a>
 	</div>
 
 </form>

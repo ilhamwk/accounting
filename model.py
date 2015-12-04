@@ -124,7 +124,7 @@ class Transaction(Model):
                .switch(Transaction) \
                .join(Item, JOIN.LEFT_OUTER) \
                .group_by(Transaction.id) \
-               .order_by(Transaction.id)
+               .order_by(Transaction.id.desc())
 
 
 class Item(Model):
@@ -159,7 +159,7 @@ class Item(Model):
                .switch(Item) \
                .join(Minor) \
                .join(Major) \
-               .order_by(Item.id)
+               .order_by(Item.id.desc())
 
 
 class ItemIndex(FTSModel):
@@ -179,9 +179,7 @@ class ItemIndex(FTSModel):
 
     @staticmethod
     def updateItem(item):
-        ItemIndex.update(name=item.name) \
-                 .update(note=item.note) \
-                 .where(docid == item.id) \
+        ItemIndex.update(name=item.name, note=item.note) \
+                 .where(ItemIndex.docid == item.id) \
                  .execute()
-
 

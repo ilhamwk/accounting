@@ -5,6 +5,7 @@ Personal accounting web-based system in Python.
 Requires:
 
 * SQLite
+* dominate
 * Flask (and Jinja by extension)
 * peewee (with playhouse extension)
 * jQuery
@@ -19,8 +20,7 @@ This will run an HTTP server in localhost:5000.
 CRUD operations for basic data entries are done.
 
 To be added:
-* Navigation bar
-* Reporting
 * Search
+* JS support for field input for prices
 
 Caveat: The item price is encoded as an integer, 100 times its value, to capture the cents without having to resort to floating point storage.

@@ -6,7 +6,7 @@ from hashlib import md5
 import os
 
 from app import app
-from model import Major, Minor, Store, Transaction, Item, ItemIndex
+from model import * 
 from helper import *
 
 @app.route('/trans', methods=['GET'])

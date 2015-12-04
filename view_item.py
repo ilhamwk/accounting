@@ -84,9 +84,27 @@ def item_edit():
         item.price = request.form['price']
         item.quantity = request.form['quantity']
         item.minor = request.form['minor_id']
+        item.note = request.form['note']
         item.save()
+        ItemIndex.updateItem(item)
         flash('Item #%s is updated.' % id, 'success')
-        return jsonify(success=True)
+        return item_detail(id)
     flash('Update item unsuccessful. Missing ID', 'danger')
-    return jsonify(success=False)
+    return item_list() 
 
+@app.route('/_item/search', methods=['POST'])
+def item_search():
+    if request.form.get('search_text'):
+        words = [word.strip() for word in \
+                 request.form['search_text'].split() if word]
+        if words:
+            search = ' '.join(words)
+            items = Item \
+                    .select(Item, ItemIndex) \
+                    .join(ItemIndex, on=(Item.id == ItemIndex.docid)) \
+                    .where(ItemIndex.match(search)) \
+                    .order_by(ItemIndex.rank().desc(), Item.id.desc())
+            return render_template('item.html', items=items, search=search)
+
+    return item_list() 
+ 

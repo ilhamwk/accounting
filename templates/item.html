@@ -24,6 +24,9 @@ from {{ date_start }}
 {% if date_end is defined and date_end is not none %}
 until {{ date_end }}
 {% endif %}
+{% if search is defined %}
+with search term "{{ search }}"
+{% endif %}
 
 {% endblock %}
 
@@ -38,7 +41,9 @@ until {{ date_end }}
 
 {% if items is defined %}
 {% if items.exists() %}
+{% if paginate is defined %}
 {{ render_pagination(paginate) }}
+{% endif %}
 
 <div class="row"><div class="col-lg-12">
 	<table class="table-striped table-condensed">
@@ -62,7 +67,7 @@ until {{ date_end }}
 				<td style="text-align: center">{{ item.quantity }}</td>
 				<td>{{ item.minor.id }} : {{ item.minor.major.name }} :: {{ item.minor.name }}</td>
 				<td>{{ item.transaction.store.name }}</td>
-				<td><a href="trans/{{ item.transaction.id }}">{{ item.transaction.id }}</a></td>
+				<td style="text-align: center"><a href="trans/{{ item.transaction.id }}">{{ item.transaction.id }}</a></td>
 				<td>{{ item.note }}</td>
 				<td style="text-align: center">
 					<button type="button" class="btn btn-default" data-id="{{ item.id }}" onclick="confirmDeleteItem(this, false)">
@@ -114,6 +119,13 @@ until {{ date_end }}
 				</option> 
 				{% endfor %}
 			</select>
+		</div>
+	</div>
+
+	<div class="row form-group">
+		<label for="note" class="col-lg-2 control-label">Note</label>
+		<div class="col-lg-5">
+			<input type="text" id="note" name="note" class="form-control" value="{{ item.note }}">
 		</div>
 	</div>
 

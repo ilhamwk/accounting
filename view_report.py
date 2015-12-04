@@ -35,8 +35,13 @@ def init_table():
                                             Major.id, Minor.id)
     table = {}
     table['order'] = []
+    table['majors'] = []
+    prev = None
     for major in majors:
         table['order'].append(major.minor.id)
+        if prev == None or prev != major.id: 
+            table['majors'].append((major.id, major.income, major.name))
+            prev = major.id
         table[major.minor.id] = (major.id, major.name, major.income, 
                                  major.minor.name, 0)
     return table
@@ -46,12 +51,16 @@ def simple_minor_table(result):
     table['total'] = {}
     for minor_id in table['order']: 
         table['total'][minor_id] = 0 
+    for (major_id, _, _) in table['majors']:
+        table['total'][('major', major_id)] = 0
     for row in result:
         (major_id, major_name, isIncome, minor_name, _) = table[row.id]
         table[row.id] = (major_id, major_name, isIncome, minor_name, row.amount)
         table['total'][row.id] += row.amount
+        table['total'][('major', major_id)] += row.amount
     return table
 
+@app.route('/', methods=['GET'])
 @app.route('/report', methods=['GET'])
 def report_now():
     today = date.today()
@@ -69,16 +78,27 @@ def report_year(year):
     result = Minor.listForYearlyReport(year)
     month_table = init_table()
     table = {}
-    for month in range(1, 13):
+    for month in xrange(1, 13):
         table[month] = copy.deepcopy(month_table)
+        table[month]['income'] = 0
+        table[month]['expense'] = 0
+        for (major, _, _) in table[1]['majors']:
+            table[month][('major', major)] = 0
     table['total'] = {}
-    for minor_id in table[1]['order']: 
-        table['total'][minor_id] = 0 
+    table['order'] = table[1]['order']
+    table['majors'] = table[1]['majors']
+    for minor_id in table['order']: 
+        table['total'][minor_id] = 0
+    for (major, _, _) in table['majors']:
+        table['total'][('major', major)] = 0
     for row in result:
         (major_id, major_name, isIncome, minor_name, _) = table[row.month][row.id]
         table[row.month][row.id] = (major_id, major_name, isIncome, 
                                     minor_name, row.amount)
+        table[row.month]['income' if isIncome else 'expense'] += row.amount
+        table[row.month][('major', major_id)] += row.amount
         table['total'][row.id] += row.amount
+        table['total'][('major', major_id)] += row.amount
     return render_template('report.html', year=year, table=table,
             worth=worth, income=income, expense=expense)
 

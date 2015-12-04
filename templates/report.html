@@ -14,6 +14,8 @@ Report for
   table { table-layout: fixed; }
   table th, table td { overflow: hidden; }
 </style>
+{% if year is defined and month is not defined %} {# yearly report contains the year chart #} 
+{% endif %}
 {% endblock %}
 
 {% macro render_value(value, size='p') -%}
@@ -25,121 +27,204 @@ Report for
 {% else %}
 <span class="text-success">+
 {% endif %}
-{{ value|abs|pricefilter }}	
+{{ value|abs|pricefilter }}  
 </span></{{size}}>
+{%- endmacro %}
+
+{% macro render_income_expense(value, income) -%}
+{% if income %}
+{{ render_value(value) }}
+{% else %}
+{{ render_value(-value) }}
+{% endif %}
 {%- endmacro %}
 
 {% block content %}
 
 <div class="row">
-	<div class="col-offset-lg-1 col-lg-2">
-		<div class="well well-lg" style="text-align: center">
-			<small>WORTH</small><br>
-			{{ render_value(worth, 'h4') }}
-			</span>
-		</div>
+  <div class="col-offset-lg-1 col-lg-2">
+    <div class="well well-lg" style="text-align: center">
+      <small>WORTH</small><br>
+      {{ render_value(worth, 'h4') }}
+      </span>
+    </div>
+  </div>
+  <div class="col-offset-lg-1 col-lg-2">
+    <div class="well well-lg" style="text-align: center">
+      <small>INCOME</small><br>
+      {{ render_value(income, 'h4') }}
+    </div>
+  </div>
+  <div class="col-offset-lg-1 col-lg-2">
+    <div class="well well-lg" style="text-align: center">
+      <small>EXPENSE</small><br>
+      {{ render_value(-expense, 'h4') }}
+    </div>
+  </div>
+  <div class="col-offset-lg-1 col-lg-2">
+    <div class="well well-lg" style="text-align: center">
+      <small>SAVED</small><br>
+      {{ render_value(income - expense, 'h4') }}
+    </div>
+  </div>
+</div>
+
+<div class="row">
+	<div class="col-lg-4">
+		<h4>Income per category </h4>
+    <canvas id="incomeCategoryChart" width="400" height="400"></canvas>
+    <script>
+			var colors = [ "#CCFFCC", "#B9ECB7", "#A6D9A3", "#94C68E", "#81B37A", "#6FA066", "#5C8D51", "#497A3D", "#376728", "#245414", "#124200" ];
+			var highlight = [ "#CCFFDD", "#ABECA9", "#8FD98B", "#76C66F", "#60B356", "#4DA040", "#3D8D2D", "#2F7A1D",  "#236710", "#195406", "#114200" ]; 
+      var data = [
+        {% for (major, income, name) in table['majors'] %} 
+        {% if income %}
+        {
+          value: {{ table['total'][('major', major)] / 100.0 }},
+          color: colors.pop(),
+          highlight: highlight.pop(),
+          label: '{{ name }}'
+        },
+  			{% endif %}
+        {% endfor %}
+      ];
+      var ctx = document.getElementById('incomeCategoryChart').getContext('2d');
+      new Chart(ctx).Pie(data);
+    </script>
 	</div>
-	<div class="col-offset-lg-1 col-lg-2">
-		<div class="well well-lg" style="text-align: center">
-			<small>INCOME</small><br>
-			{{ render_value(income, 'h4') }}
-		</div>
-	</div>
-	<div class="col-offset-lg-1 col-lg-2">
-		<div class="well well-lg" style="text-align: center">
-			<small>EXPENSE</small><br>
-			{{ render_value(-expense, 'h4') }}
-		</div>
-	</div>
-	<div class="col-offset-lg-1 col-lg-2">
-		<div class="well well-lg" style="text-align: center">
-			<small>SAVED</small><br>
-			{{ render_value(income - expense, 'h4') }}
-		</div>
+
+	<div class="col-lg-4">
+		<h4>Expense per category </h4>
+    <canvas id="expenseCategoryChart" width="400" height="400"></canvas>
+    <script>
+			var colors = [ "#FFCCCE", "#EAB5B7", "#D59EA0", "#C08889", "#AB7172", "#965A5B", "#814444", "#6C2D2D", "#571616", "#420000" ];
+			var highlight = [ "#FFDDDD", "#EAA6A8", "#D58486", "#C06668", "#AB4C4E", "#963537", "#812223", "#6C1313", "#570708", "#300000" ]; 
+      var data = [
+        {% for (major, income, name) in table['majors'] %} 
+        {% if not income %}
+        {
+          value: {{ table['total'][('major', major)] / 100.0 }},
+          color: colors.pop(),
+          highlight: highlight.pop(),
+					label: '{{ name }}'
+        },
+  			{% endif %}
+        {% endfor %}
+      ];
+      var ctx = document.getElementById('expenseCategoryChart').getContext('2d');
+      new Chart(ctx).Pie(data);
+    </script>
 	</div>
 </div>
 
 {% if year is defined and month is not defined %} {# yearly report #} 
+
+<div class="row"><div class="col-lg-8">
+	<h4> Monthly overview in {{ year }} </h4>
+  <canvas id="yearChart" width="800" height="400"></canvas>
+  <script>
+    var yearData = {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 
+      datasets: [{
+        fillColor: 'rgb(43, 217, 110)',
+        strokeColor: 'rgb(31, 154, 77)',
+        highlightFill: 'rgb(31, 154, 77)',
+        highlightStroke: 'rgb(27, 133, 66)',
+        data: [{% for i in range(1, 13) %}{{ table[i]['income'] / 100.0 }},{% endfor %}]
+      }, {
+        fillColor: 'rgb(236, 129, 108)',
+        strokeColor: 'rgb(230, 75, 48)',
+        highlightFill: 'rgb(230, 75, 48)',
+        highlightStroke: 'rgb(207, 68, 44)',
+        data: [{% for i in range(1, 13) %}{{ table[i]['expense'] / 100.0 }},{% endfor %}]
+      }]
+    };
+    var ctx = document.getElementById('yearChart').getContext('2d');
+    new Chart(ctx).Bar(yearData);
+  </script>
+</div></div>
+
 <div class="row"><div class="col-lg-12">
-		<table class="table-bordered table-hover table">
-			<thead><tr>
-				 <th style="width:10%">Categories</th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/1">Jan</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/2">Feb</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/3">Mar</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/4">Apr</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/5">May</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/6">Jun</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/7">Jul</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/8">Aug</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/9">Sep</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/10">Oct</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/11">Nov</a></th>
-				 <th style="width: 7%; text-align:right"><a href="/report/{{year}}/12">Dec</a></th>
-				 <th style="text-align:right">Total</th>
-			</tr></thead>
-			<tbody>
-			{% set minor_order = table[1]['order'] %}
-			{% set income = False %}
-			{% for minor in minor_order %}
-			  {% set (major_id, major_name, inc, minor_name, _) = table[1][minor] %}
-			  {% if inc != income %}
-				  {% set income = inc %}
-					{% if income %}
-					<tr class="success"><td colspan=14><h4>INCOME</h4></td></tr>
-					{% else %}
-					<tr class="warning"><td colspan=14><h4>EXPENSE</h4></td></tr>
-					{% endif %}
-				{% endif %}
-				<tr>
-					<td>{{ major_name }} :: {{ minor_name }}</td>
-					{% for month in range(1, 13) %}
-						{% set (_, _, _, _, val) = table[month][minor] %}
-						{% if income %}
-						<td style="text-align: right"><a href="/item?minor={{minor}}&date_year={{year}}&date_month={{month}}">{{ render_value(val) }}</a></td> 
-						{% else %}
-							<td style="text-align: right"><a href="/item?minor={{minor}}&date_year={{year}}&date_month={{month}}">{{ render_value(-val) }}</td> 
-						{% endif %}
-					{% endfor %}
-					{% if income %}
-					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(table['total'][minor]) }}</a></strong></td>
-					{% else %}
-					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(-table['total'][minor]) }}</a></strong></td>
-					{% endif %}
-				</tr>
-			{% endfor %}
-			</tbody>
-		</table>
+		<h4>Detailed Summary </h4>
+    <table class="table-bordered table-hover table">
+      <thead><tr>
+         <th style="width:10%">Categories</th>
+         {% for (idx, mth) in [(1, 'Jan'), (2, 'Feb'), (3, 'Mar'), (4, 'Apr'), (5, 'May'), (6, 'Jun'), (7, 'Jul'), (8, 'Aug'), (9, 'Sep'), (10, 'Oct'), (11, 'Nov'), (12, 'Dec')] %}
+         <th style="width: 7%; text-align:right"><a href="/report/{{year}}/{{idx}}">{{mth}}</a></th>
+         {% endfor %}
+         <th style="text-align:right">Total</th>
+      </tr></thead>
+      <tbody>
+      {% set minor_order = table['order'] %}
+      {% set income = False %}
+      {% set cur_major_id = -1 %}
+      {% for minor in minor_order %}
+        {% set (major_id, major_name, inc, minor_name, _) = table[1][minor] %}
+        {% if inc != income %}
+          {% set income = inc %}
+          {% if income %}
+          <tr class="success"><td colspan=14><h4>INCOME</h4></td></tr>
+          {% else %}
+          <tr class="warning"><td colspan=14><h4>EXPENSE</h4></td></tr>
+          {% endif %}
+        {% endif %}
+        {% if major_id != cur_major_id %}
+          {% set cur_major_id = major_id %}
+          <tr class="info">
+            <td><b>{{ major_name }}</b></td>
+            {% for month in range(1, 13) %}
+              <td style="text-align: right"><a href="/item?major={{major_id}}&date_year={{year}}&date_month={{month}}">{{ render_income_expense(table[month][('major', major_id)], income) }}</a></td> 
+            {% endfor %}
+            <td style="text-align: right"><strong><a href="/item?major={{major_id}}{{date_args}}">{{ render_income_expense(table['total'][('major', major_id)], income) }}</a></strong></td>
+          </tr>
+        {% endif %}
+        <tr>
+          <td><span class="glyphicon glyphicon-menu-right"></span> {{ minor_name }}</td>
+          {% for month in range(1, 13) %}
+            {% set (_, _, _, _, val) = table[month][minor] %}
+            <td style="text-align: right"><a href="/item?minor={{minor}}&date_year={{year}}&date_month={{month}}">{{ render_income_expense(val, income) }}</a></td> 
+          {% endfor %}
+          <td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_income_expense(table['total'][minor], income) }}</a></strong></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
 {% elif month is defined or days is defined %} {# normal report #}
 <div class="row"><div class="col-lg-6">
-		<table class="table-bordered table-hover table">
-			<thead><tr>
-				 <th>Categories</th>
-				 <th style="text-align: right">Amount</th>
-		 </tr></thead>
-		 <tbody>
-			{% set income = False %}
-			{% for minor in table['order'] %}
-			  {% set (major_id, major_name, inc, minor_name, value) = table[minor] %}
-			  {% if inc != income %}
-				  {% set income = inc %}
-					{% if income %}
-					<tr class="success"><td colspan=2><h4>INCOME</h4></td></tr>
-					{% else %}
-					<tr class="warning"><td colspan=2><h4>EXPENSE</h4></td></tr>
-					{% endif %}
-				{% endif %}
-				<tr>
-					<td>{{ major_name }} :: {{ minor_name }}</td>
-					{% if income %}
-					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(value) }}</a></strong></td>
-					{% else %}
-					<td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_value(-value) }}</a></strong></td>
-					{% endif %}
-				</tr>
-			{% endfor %}
-		 </tbody>
-	 </table>
+		<h4>Detailed Summary </h4>
+    <table class="table-bordered table-hover table">
+      <thead><tr>
+         <th>Categories</th>
+         <th style="text-align: right">Amount</th>
+     </tr></thead>
+     <tbody>
+      {% set income = False %}
+      {% set cur_major_id = -1 %}
+      {% for minor in table['order'] %}
+        {% set (major_id, major_name, inc, minor_name, value) = table[minor] %}
+        {% if inc != income %}
+          {% set income = inc %}
+          {% if income %}
+          <tr class="success"><td colspan=2><h4>INCOME</h4></td></tr>
+          {% else %}
+          <tr class="warning"><td colspan=2><h4>EXPENSE</h4></td></tr>
+          {% endif %}
+        {% endif %}
+        {% if cur_major_id != major_id %}
+          {% set cur_major_id = major_id %}
+          <tr class="info">
+            <td><b>{{ major_name }}</b></td>
+            <td style="text-align: right"><strong><a href="/item?major={{major_id}}{{date_args}}">{{ render_income_expense(table['total'][('major', major_id)], income) }}</a></strong></td>
+          </tr>
+        {% endif %}
+        <tr>
+          <td><span class="glyphicon glyphicon-menu-right"></span> {{ minor_name }}</td>
+          <td style="text-align: right"><strong><a href="/item?minor={{minor}}{{date_args}}">{{ render_income_expense(value, income) }}</a></strong></td>
+        </tr>
+      {% endfor %}
+     </tbody>
+   </table>
 {% endif %}
 </div></div>
 
