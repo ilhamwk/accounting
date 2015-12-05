@@ -25,7 +25,7 @@
 	<div class="col-lg-5">
 		<select name="minor-major" id="minor-major" class="form-control">
 			{% for major in majors %}
-			<option value="{{ major.id }}" {% if minor.major == major.id %}SELECTED{% endif %}>{{ major.id }} : {{ major.name }}</option>
+			<option value="{{ major.id }}" {% if minor.major.id == major.id %}SELECTED{% endif %}>{{ major.id }} : {{ major.name }}</option>
 			{% endfor %}
 		</select>
 	</div>

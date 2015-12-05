@@ -131,7 +131,7 @@ window.onload = function() {
 		<div class="col-lg-5">
 			<select name="store" id="store" class="form-control">
 				{% for store in stores %}
-				<option value="{{ store.id }}" {% if transaction is defined and transaction.store == store.id %}SELECTED{% endif %}>{{ store.id }} : {{ store.name }}</option>
+				<option value="{{ store.id }}" {% if transaction is defined and transaction.store.id == store.id %}SELECTED{% endif %}>{{ store.id }} : {{ store.name }}</option>
 				{% endfor %}
 			</select>
 		</div>

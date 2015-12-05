@@ -114,7 +114,7 @@ with search term "{{ search }}"
 		<div class="col-lg-5">
 			<select name="minor_id" class="form-control">
 				{% for major in majors %}
-				<option value="{{ major.minor.id }}" {% if major.minor.id == item.minor %}SELECTED{% endif %}>
+				<option value="{{ major.minor.id }}" {% if major.minor.id == item.minor.id %}SELECTED{% endif %}>
 				  {{ major.minor.id }} : {{ major.name }} :: {{ major.minor.name }}
 				</option> 
 				{% endfor %}
