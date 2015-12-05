@@ -43,8 +43,9 @@ def major_add():
                                  income=bool(request.form.get('income')))
             minors = []
             for minor_name in string.split(request.form['minors'], ','):
-                minor = Minor.create(name=string.strip(minor_name), major=major)
-                minors.append(minor)
+                if len(minor_name) > 0:
+                    minor = Minor.create(name=string.strip(minor_name), major=major)
+                    minors.append(minor)
             flash('A category created successfully.', 'success')
         return render_template('major.html', major=major, minors=minors)
     return render_template('major.html')
