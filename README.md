@@ -19,7 +19,7 @@ To run:
 
     mkdir receipt; python main.py
 
-This will run an HTTP server in localhost:5000.
+This will run an HTTP server on localhost:5000.
 
 CRUD operations for basic data entries are done.
 
