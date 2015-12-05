@@ -68,6 +68,8 @@ def trans_add():
                     trans.bill_file_name = filename
                 except:
                     flash('Cannot upload file', 'danger')
+            app.logger.debug(request.form['store'])
+            app.logger.debug(trans.store.id)
             trans.save()
             addNewItems(request.form, trans)
             flash('Successfully updated transaction #%s' % trans_id, 'success')

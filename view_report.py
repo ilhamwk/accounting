@@ -99,7 +99,7 @@ def report_year(year):
         table['total'][row.id] += row.amount
         table['total'][('major', major_id)] += row.amount
     return render_template('report.html', year=year, table=table,
-            worth=worth, income=income, expense=expense)
+            worth=worth, income=income, expense=expense, date_args=date_args)
 
 @app.route('/report/<int:year>/<int:month>', methods=['GET'])
 def report_month(year, month):

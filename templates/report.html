@@ -155,7 +155,7 @@ Report for
       <thead><tr>
          <th style="width:10%">Categories</th>
          {% for (idx, mth) in [(1, 'Jan'), (2, 'Feb'), (3, 'Mar'), (4, 'Apr'), (5, 'May'), (6, 'Jun'), (7, 'Jul'), (8, 'Aug'), (9, 'Sep'), (10, 'Oct'), (11, 'Nov'), (12, 'Dec')] %}
-         <th style="width: 7%; text-align:right"><a href="/report/{{year}}/{{idx}}">{{mth}}</a></th>
+         <th style="text-align:right"><a href="/report/{{year}}/{{idx}}">{{mth}}</a></th>
          {% endfor %}
          <th style="text-align:right">Total</th>
       </tr></thead>
